@@ -91,14 +91,21 @@ const Inventory = ({
       newContent[row][col] = letter;
       setContent(newContent);
       setSelectedCell(selectedCell + 2);
-      setLetters(letters.filter((l) => l !== letter));
 
-      // Append the selected letter to the word
-      setWord((prevWord) => {
-        const newWord = [...prevWord, letter];
-        console.log("Current word:", newWord.join("")); // Log the current word string
-        return newWord;
-      });
+      // Update word based on the content of the row
+      const newRowContent = newContent[row];
+      let newWord = [];
+      for (const tile of newRowContent) {
+        if (tile !== "") {
+          newWord.push(tile);
+        } else {
+          newWord.push(""); // Add empty tiles for empty cells
+        }
+      }
+      setWord(newWord);
+
+      // Log the current word
+      console.log("Current word:", newWord.join(""));
     }
   };
 
