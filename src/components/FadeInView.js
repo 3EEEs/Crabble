@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { Animated, Text, View, Image } from "react-native";
+import { Animated, Text, View, Image, StyleSheet } from "react-native";
 
 const FadeInView = (props) => {
   const fadeAnim = useRef(new Animated.Value(0)).current; // Initial value for opacity: 0
@@ -7,7 +7,7 @@ const FadeInView = (props) => {
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 1000, // Adjust the duration as needed
+      duration: 10000, // Adjust the duration as needed
       useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
@@ -28,10 +28,18 @@ const FadeInView = (props) => {
         </Text>
       ) : (
         // Otherwise, render image content
-        <Image source={content} style={{ width: 250, height: 250 }} />
+        <Image source={content} style={styles.image} />
       )}
     </Animated.View>
   );
 };
+
+const styles = StyleSheet.create({
+  image: {
+    width: 150,
+    height: 150,
+    alignSelf: "center",
+  },
+});
 
 export default FadeInView;

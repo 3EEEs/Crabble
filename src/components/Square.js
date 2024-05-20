@@ -12,7 +12,7 @@ const Square = ({ value, content, isSelected, isCenter, onSelect }) => {
         styles.cell,
         isCenter && styles.centerCell,
         isSelected && styles.selectedCell,
-        content && styles.blueBackground,
+        content,
       ]}
       onPress={handlePress}
     >

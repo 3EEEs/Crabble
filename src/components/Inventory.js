@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Button } from "react-native";
-import getWordDefinition from "../api/getWordDefinition";
+import TileBag from "./TileBag"; // Import the TileBag component
 
 const Inventory = ({
   size,
@@ -10,51 +10,25 @@ const Inventory = ({
   setContent,
 }) => {
   const startingLetters = 7;
-  const tileDistribution = {
-    A: 9,
-    B: 2,
-    C: 2,
-    D: 4,
-    E: 12,
-    F: 2,
-    G: 3,
-    H: 2,
-    I: 9,
-    J: 1,
-    K: 1,
-    L: 4,
-    M: 2,
-    N: 6,
-    O: 8,
-    P: 2,
-    Q: 1,
-    R: 6,
-    S: 4,
-    T: 6,
-    U: 4,
-    V: 2,
-    W: 2,
-    X: 1,
-    Y: 2,
-    Z: 1,
-    "@": 2,
-  };
-
   const [letters, setLetters] = useState([]);
   const [tileBag, setTileBag] = useState([]);
   const [word, setWord] = useState([]);
   const [definition, setDefinition] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [direction, setDirection] = useState("");
+  const [tileDistribution, setTileDistribution] = useState({}); // Initialize tile distribution as state
 
   useEffect(() => {
-    replenishTiles();
+    const distribution = TileBag(); // Get the tile distribution from TileBag component
+    setTileDistribution(distribution); // Set tile distribution state
+    replenishTiles(distribution); // Pass the distribution to replenishTiles
   }, []);
 
-  const replenishTiles = () => {
+  const replenishTiles = (distribution) => {
     const newLetters = [];
     const newTileBag = [];
-    for (const letter in tileDistribution) {
-      const count = tileDistribution[letter];
+    for (const letter in distribution) {
+      const count = distribution[letter];
       for (let i = 0; i < count; i++) {
         newTileBag.push(letter);
       }
@@ -81,6 +55,8 @@ const Inventory = ({
   };
 
   const selectLetter = (letter) => {
+    let newWord = [];
+
     selectedCell = selectedCell - 1;
 
     if (selectedCell !== null) {
@@ -90,18 +66,77 @@ const Inventory = ({
       const newContent = [...content];
       newContent[row][col] = letter;
       setContent(newContent);
+
+      // Find the index of the first occurrence of the selected letter in letters array
+      const letterIndex = letters.indexOf(letter);
+      if (letterIndex !== -1) {
+        // Remove the selected letter from the letters array
+        const newLetters = [...letters];
+        newLetters.splice(letterIndex, 1);
+        setLetters(newLetters);
+      }
+
+      // Find the index of the first occurrence of the selected letter in tileBag array
+      const tileIndex = tileBag.indexOf(letter);
+      if (tileIndex !== -1) {
+        // Remove the selected letter from the tileBag array
+        const newTileBag = [...tileBag];
+        newTileBag.splice(tileIndex, 1);
+        setTileBag(newTileBag);
+      }
+
+      // Check if there's a letter in the adjacent cell to the left or right
+      if (col > 0 && newContent[row][col - 1] !== "") {
+        setDirection("h"); // Set direction to left
+        console.log("Set direction to horizontal");
+      } else if (
+        col < newContent[row].length - 1 &&
+        newContent[row][col + 1] !== ""
+      ) {
+        setDirection("h"); // Set direction to right
+        console.log("Set direction to horizontal");
+      }
+
+      // Check if there's a letter in the adjacent cell above
+      if (row > 0 && newContent[row - 1][col] !== "") {
+        setDirection("h"); // Set direction to vertical
+        console.log("Set direction to Vertical");
+      }
+
+      // If direction is still empty, default to vertical
+      if (direction === "") {
+        setDirection("v");
+        console.log("Set direction to Vertical");
+      }
+
       setSelectedCell(selectedCell + 2);
 
+      //First check if the word being spelled is horizontal
       // Update word based on the content of the row
-      const newRowContent = newContent[row];
-      let newWord = [];
-      for (const tile of newRowContent) {
-        if (tile !== "") {
-          newWord.push(tile);
-        } else {
-          newWord.push(""); // Add empty tiles for empty cells
+      if (direction === "h") {
+        const newRowContent = newContent[row];
+        for (const tile of newRowContent) {
+          if (tile !== "") {
+            newWord.push(tile);
+          } else {
+            newWord.push(""); // Add empty tiles for empty cells
+          }
         }
       }
+
+      //Check if the word is vertical
+      //Update word based on the content of the column
+      if (direction === "v") {
+        const newColContent = newContent.map((row) => row[col]); // Extract column content
+        for (const tile of newColContent) {
+          if (tile !== "") {
+            newWord.push(tile);
+          } else {
+            newWord.push(""); // Add empty tiles for empty cells
+          }
+        }
+      }
+
       setWord(newWord);
 
       // Log the current word
@@ -139,6 +174,24 @@ const Inventory = ({
         }
       } else {
         setErrorMessage("No data found for the word.");
+      }
+
+      // Check if word is horizontal or vertical
+      const row = Math.floor(selectedCell / size);
+      const col = selectedCell % size;
+      const horizontalWord =
+        word.length > 1 &&
+        row === Math.floor((selectedCell - word.length + 1) / size);
+      const verticalWord =
+        word.length > 1 &&
+        col === Math.floor((selectedCell - word.length * size + size) % size);
+
+      if (horizontalWord) {
+        console.log("Horizontal word detected.");
+      } else if (verticalWord) {
+        console.log("Vertical word detected.");
+      } else {
+        console.log("Word is neither horizontal nor vertical.");
       }
     } catch (error) {
       setErrorMessage("Error fetching word definition.");

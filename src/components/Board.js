@@ -32,6 +32,7 @@ const Board = ({
   };
 
   const handleSelect = (value) => {
+    //Edit Here
     // If adjacent cells have some content, allow placement
     const [rowIndex, colIndex] = findCellIndex(value);
     const adjacentCells = [

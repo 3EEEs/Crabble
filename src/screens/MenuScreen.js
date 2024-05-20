@@ -31,6 +31,13 @@ const MenuScreen = () => {
             <Text style={styles.buttonText}>Search</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Test", { word: term })}
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>Test</Text>
+          </TouchableOpacity>
+
           <View style={styles.imageContainer}>
             <Image
               style={styles.image}

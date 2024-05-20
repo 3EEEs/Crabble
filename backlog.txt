@@ -1,0 +1,6 @@
+Add protection for user selection a tile before selecting were the tile will be placed on the board.
+Increase the board size to reach the side of the screen.
+Add validation for words placed on the game board screen. (API integration)
+Add button when word is placed
+Add point system (Letters are worth different amounts)
+Add multiplier tiles to the game board
