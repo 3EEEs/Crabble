@@ -20,6 +20,8 @@ const Board = ({
     }
   }, [start, size, valueArray.length]);
 
+  //Set height and width to the proper values
+
   const findCellIndex = (value) => {
     for (let i = 0; i < valueArray.length; i++) {
       const row = valueArray[i];

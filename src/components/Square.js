@@ -1,15 +1,35 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
 
 const Square = ({ value, content, isSelected, isCenter, onSelect }) => {
   const handlePress = () => {
     onSelect(value);
   };
 
+  const { width, height } = Dimensions.get("window");
+
+  // Create a dynamic style based on screen dimensions
+  const dynamicStyles = StyleSheet.create({
+    cell: {
+      height: width / 9, // Adjust the divisor to change the size as needed
+      width: width / 9, // Adjust the divisor to change the size as needed
+      borderWidth: 1,
+      borderColor: "black",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  });
+
   return (
     <TouchableOpacity
       style={[
-        styles.cell,
+        dynamicStyles.cell,
         isCenter && styles.centerCell,
         isSelected && styles.selectedCell,
         content,
@@ -22,14 +42,6 @@ const Square = ({ value, content, isSelected, isCenter, onSelect }) => {
 };
 
 const styles = StyleSheet.create({
-  cell: {
-    width: 40,
-    height: 40,
-    borderWidth: 1,
-    borderColor: "black",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   centerCell: {
     backgroundColor: "lightcoral", // Set your desired background color for the center cell
   },

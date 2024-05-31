@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Button } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Button,
+  Dimensions,
+} from "react-native";
 import TileBag from "./TileBag"; // Import the TileBag component
+import Draggable from "react-native-draggable";
 
 const Inventory = ({
-  size,
-  selectedCell,
-  setSelectedCell,
-  content,
-  setContent,
+  size = 100,
+  selectedCell = null,
+  setSelectedCell = () => {},
+  content = [],
+  setContent = () => {},
+  handleDrop,
+  letters,
+  setLetters,
 }) => {
   const startingLetters = 7;
-  const [letters, setLetters] = useState([]);
   const [tileBag, setTileBag] = useState([]);
   const [word, setWord] = useState([]);
   const [definition, setDefinition] = useState("");
@@ -209,18 +219,24 @@ const Inventory = ({
         <Text style={styles.title}>Inventory</Text>
         <View style={styles.lettersContainer}>
           {letters.map((letter, index) => (
-            <TouchableOpacity
+            <Draggable
               key={index}
-              style={styles.letter}
-              onPress={() => selectLetter(letter)}
+              x={(index % 7) * 40} // Adjust the spacing as needed
+              y={Math.floor(index / 7) * 30} // Adjust the spacing as needed, multiplying by 2 for better spacing
+              shouldReverse
+              onDragRelease={(event) => handleDrop(event, letter)} // Use onDragRelease for the drop event
             >
-              <Text>{letter}</Text>
-            </TouchableOpacity>
+              <View style={styles.letter}>
+                <Text>{letter}</Text>
+              </View>
+            </Draggable>
           ))}
         </View>
-        <Button title="Draw Tile" onPress={drawTile} />
-        <Button title="Check Word" onPress={checkWord} />
-        {errorMessage ? <Text>{errorMessage}</Text> : null}
+        <View style={styles.buttons}>
+          <Button title="Draw Tile" onPress={drawTile} />
+          <Button title="Check Word" onPress={checkWord} />
+        </View>
+        {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
         {definition ? <Text>{definition}</Text> : null}
       </View>
     </View>
@@ -250,7 +266,7 @@ const styles = StyleSheet.create({
   sidePanel: {
     flex: 1,
     padding: 10,
-    justifyContent: "center",
+    justifyContent: "top",
     alignItems: "center",
     backgroundColor: "lightgrey",
   },
@@ -263,12 +279,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    flexGrow: 1, // Allow lettersContainer to grow and take available space
   },
   letter: {
-    padding: 10,
     margin: 5,
+    padding: 10,
     backgroundColor: "#DDDDDD",
     borderRadius: 5,
+    borderColor: "black",
+  },
+  buttons: {
+    alignSelf: "flex-end",
+    marginTop: "auto", // Push buttons to the bottom
+    width: "100%", // Ensure buttons take full width
+    alignItems: "center", // Center buttons horizontally
+    paddingBottom: 10,
+  },
+  error: {
+    paddingBottom: 20,
   },
 });
 
