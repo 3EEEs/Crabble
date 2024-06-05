@@ -1,32 +1,29 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Button,
-  Dimensions,
-} from "react-native";
+import { View, Text, StyleSheet, Button } from "react-native";
 import TileBag from "./TileBag"; // Import the TileBag component
 import Draggable from "react-native-draggable";
+import getWordDefinition from "../api/getWordDefinition";
 
 const Inventory = ({
-  size = 100,
-  selectedCell = null,
-  setSelectedCell = () => {},
-  content = [],
-  setContent = () => {},
+  size,
+  content,
+  setContent,
   handleDrop,
   letters,
   setLetters,
+  word,
+  setWord,
+  isInWord,
+  setIsInWord,
 }) => {
+  size = size || 100; // Use default parameter value for size
+  content = content || []; // Use default parameter value for content
+  setContent = setContent || (() => {}); // Use default parameter value for setContent
   const startingLetters = 7;
   const [tileBag, setTileBag] = useState([]);
-  const [word, setWord] = useState([]);
-  const [definition, setDefinition] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [direction, setDirection] = useState("");
   const [tileDistribution, setTileDistribution] = useState({}); // Initialize tile distribution as state
+  const [definition, setDefinition] = useState(""); // Add definition state
 
   useEffect(() => {
     const distribution = TileBag(); // Get the tile distribution from TileBag component
@@ -60,97 +57,7 @@ const Inventory = ({
       setTileBag(tileBag.filter((_, index) => index !== randomIndex));
 
       // Update letters state with the newly drawn tile
-      setLetters([...letters, randomCharacter]);
-    }
-  };
-
-  const selectLetter = (letter) => {
-    let newWord = [];
-
-    selectedCell = selectedCell - 1;
-
-    if (selectedCell !== null) {
-      console.log("Selected Cell: ", selectedCell);
-      const row = Math.floor(selectedCell / size);
-      const col = selectedCell % size;
-      const newContent = [...content];
-      newContent[row][col] = letter;
-      setContent(newContent);
-
-      // Find the index of the first occurrence of the selected letter in letters array
-      const letterIndex = letters.indexOf(letter);
-      if (letterIndex !== -1) {
-        // Remove the selected letter from the letters array
-        const newLetters = [...letters];
-        newLetters.splice(letterIndex, 1);
-        setLetters(newLetters);
-      }
-
-      // Find the index of the first occurrence of the selected letter in tileBag array
-      const tileIndex = tileBag.indexOf(letter);
-      if (tileIndex !== -1) {
-        // Remove the selected letter from the tileBag array
-        const newTileBag = [...tileBag];
-        newTileBag.splice(tileIndex, 1);
-        setTileBag(newTileBag);
-      }
-
-      // Check if there's a letter in the adjacent cell to the left or right
-      if (col > 0 && newContent[row][col - 1] !== "") {
-        setDirection("h"); // Set direction to left
-        console.log("Set direction to horizontal");
-      } else if (
-        col < newContent[row].length - 1 &&
-        newContent[row][col + 1] !== ""
-      ) {
-        setDirection("h"); // Set direction to right
-        console.log("Set direction to horizontal");
-      }
-
-      // Check if there's a letter in the adjacent cell above
-      if (row > 0 && newContent[row - 1][col] !== "") {
-        setDirection("h"); // Set direction to vertical
-        console.log("Set direction to Vertical");
-      }
-
-      // If direction is still empty, default to vertical
-      if (direction === "") {
-        setDirection("v");
-        console.log("Set direction to Vertical");
-      }
-
-      setSelectedCell(selectedCell + 2);
-
-      //First check if the word being spelled is horizontal
-      // Update word based on the content of the row
-      if (direction === "h") {
-        const newRowContent = newContent[row];
-        for (const tile of newRowContent) {
-          if (tile !== "") {
-            newWord.push(tile);
-          } else {
-            newWord.push(""); // Add empty tiles for empty cells
-          }
-        }
-      }
-
-      //Check if the word is vertical
-      //Update word based on the content of the column
-      if (direction === "v") {
-        const newColContent = newContent.map((row) => row[col]); // Extract column content
-        for (const tile of newColContent) {
-          if (tile !== "") {
-            newWord.push(tile);
-          } else {
-            newWord.push(""); // Add empty tiles for empty cells
-          }
-        }
-      }
-
-      setWord(newWord);
-
-      // Log the current word
-      console.log("Current word:", newWord.join(""));
+      setLetters((prevLetters) => [...prevLetters, randomCharacter]);
     }
   };
 
@@ -163,6 +70,7 @@ const Inventory = ({
 
       const wordString = word.join("").toLowerCase(); // Join letters and convert to lowercase
       const response = await getWordDefinition(wordString);
+      console.log("Content:", content);
 
       if (response && response.length > 0) {
         const wordData = response[0];
@@ -178,6 +86,18 @@ const Inventory = ({
         ) {
           const wordDefinition = firstMeaning.definitions[0].definition;
           setDefinition(`${word}: ${wordDefinition}`);
+          console.log("Correct word!");
+
+          setIsInWord([]);
+          setWord([]);
+
+          // Replace the letters used with new ones
+          console.log("Replacing Letters...");
+          const lettersToReplace = 7 - letters.length; // Calculate the number of tiles to draw
+          for (let i = 0; i < lettersToReplace; i++) {
+            drawTile();
+          }
+
           setErrorMessage("");
         } else {
           setErrorMessage("No definition found for the word.");
@@ -185,30 +105,16 @@ const Inventory = ({
       } else {
         setErrorMessage("No data found for the word.");
       }
-
-      // Check if word is horizontal or vertical
-      const row = Math.floor(selectedCell / size);
-      const col = selectedCell % size;
-      const horizontalWord =
-        word.length > 1 &&
-        row === Math.floor((selectedCell - word.length + 1) / size);
-      const verticalWord =
-        word.length > 1 &&
-        col === Math.floor((selectedCell - word.length * size + size) % size);
-
-      if (horizontalWord) {
-        console.log("Horizontal word detected.");
-      } else if (verticalWord) {
-        console.log("Vertical word detected.");
-      } else {
-        console.log("Word is neither horizontal nor vertical.");
-      }
     } catch (error) {
-      setErrorMessage("Error fetching word definition.");
+      if (error.message === "Request failed with status code 404") {
+        setErrorMessage("Sorry, no definitions found for this word.");
+      } else {
+        setErrorMessage("An error occurred while fetching word definition.");
+      }
       // Return the letters in the word back to inventory
       setLetters((prevLetters) => [...prevLetters, ...word]); // Use functional update to ensure the latest state
       for (let i = 0; i < word.length; i++) {
-        console.log("Here is the letter:", word[i]);
+        console.log("Letter returned to inventory:", word[i]);
       }
     }
   };
@@ -221,20 +127,31 @@ const Inventory = ({
           {letters.map((letter, index) => (
             <Draggable
               key={index}
-              x={(index % 7) * 40} // Adjust the spacing as needed
-              y={Math.floor(index / 7) * 30} // Adjust the spacing as needed, multiplying by 2 for better spacing
+              x={(index % 7) * 52.5} // Adjust the spacing as needed
+              y={Math.floor(index / 7) * 50} // Adjust the spacing as needed, multiplying by 2 for better spacing
               shouldReverse
-              onDragRelease={(event) => handleDrop(event, letter)} // Use onDragRelease for the drop event
+              onDragRelease={(event) => {
+                const check = handleDrop(event, letter);
+                console.log("Check: " + check);
+              }}
             >
-              <View style={styles.letter}>
-                <Text>{letter}</Text>
+              <View style={styles.shadowProp}>
+                <View style={styles.letter}>
+                  <Text>{letter}</Text>
+                </View>
               </View>
             </Draggable>
           ))}
         </View>
         <View style={styles.buttons}>
           <Button title="Draw Tile" onPress={drawTile} />
-          <Button title="Check Word" onPress={checkWord} />
+          <Button
+            title="Check Word"
+            onPress={() => {
+              checkWord();
+              console.log("Button Pressed");
+            }}
+          />
         </View>
         {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
         {definition ? <Text>{definition}</Text> : null}
@@ -285,10 +202,17 @@ const styles = StyleSheet.create({
   },
   letter: {
     margin: 5,
-    padding: 10,
-    backgroundColor: "#DDDDDD",
-    borderRadius: 5,
-    borderColor: "black",
+    //padding: 10,
+    backgroundColor: "bisque",
+    borderRadius: 1,
+    borderWidth: 0.5,
+    borderColor: "burlywood",
+    width: 45, // Set the width to a fixed value
+    height: 45, // Set the height to a fixed value
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
   },
   buttons: {
     alignSelf: "flex-end",
@@ -298,7 +222,14 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   error: {
-    paddingBottom: 20,
+    color: "red", // Style the error message to be more visible
+    marginTop: 10,
+  },
+  shadowProp: {
+    shadowColor: "#171717",
+    shadowOffset: { width: -2, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
 });
 

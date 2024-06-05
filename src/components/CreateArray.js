@@ -2,8 +2,8 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
 const CreateArray = (size, param) => {
-  console.log("param: " + param);
-  console.log("size: " + size);
+  // console.log("param: " + param);
+  // console.log("size: " + size);
 
   // Initialize the 2D array
   const array = [];

@@ -4,12 +4,13 @@ import Square from "./Square";
 import CreateArray from "./CreateArray";
 
 const Board = ({
-  selectedCell,
-  setSelectedCell,
-  content,
-  setContent,
-  size,
-  start,
+  selectedCell = null,
+  setSelectedCell = () => {},
+  content = [],
+  setContent = () => {},
+  size = 9,
+  start = false,
+  isInWord = [],
 }) => {
   const [valueArray, setValueArray] = useState([]);
 
@@ -20,7 +21,26 @@ const Board = ({
     }
   }, [start, size, valueArray.length]);
 
-  //Set height and width to the proper values
+  const handleSelect = (value) => {
+    const [rowIndex, colIndex] = findCellIndex(value);
+    const adjacentCells = [
+      [rowIndex - 1, colIndex], // Top cell
+      [rowIndex + 1, colIndex], // Bottom cell
+      [rowIndex, colIndex - 1], // Left cell
+      [rowIndex, colIndex + 1], // Right cell
+    ];
+
+    const hasAdjacentContent = adjacentCells.some(([r, c]) => {
+      if (r >= 0 && r < size && c >= 0 && c < size) {
+        return !!content[r][c];
+      }
+      return false;
+    });
+
+    if (hasAdjacentContent) {
+      setSelectedCell(value);
+    }
+  };
 
   const findCellIndex = (value) => {
     for (let i = 0; i < valueArray.length; i++) {
@@ -33,30 +53,6 @@ const Board = ({
     return [-1, -1]; // If value is not found
   };
 
-  const handleSelect = (value) => {
-    //Edit Here
-    // If adjacent cells have some content, allow placement
-    const [rowIndex, colIndex] = findCellIndex(value);
-    const adjacentCells = [
-      [rowIndex - 1, colIndex], // Top cell
-      [rowIndex + 1, colIndex], // Bottom cell
-      [rowIndex, colIndex - 1], // Left cell
-      [rowIndex, colIndex + 1], // Right cell
-    ];
-
-    // Check if any adjacent cell has content
-    const hasAdjacentContent = adjacentCells.some(([r, c]) => {
-      if (r >= 0 && r < size && c >= 0 && c < size) {
-        return !!content[r][c]; // Check if content exists
-      }
-      return false;
-    });
-
-    if (hasAdjacentContent) {
-      setSelectedCell(value);
-    }
-  };
-
   return (
     <View style={styles.container}>
       {valueArray.map((row, rowIndex) => (
@@ -65,12 +61,14 @@ const Board = ({
             const isCenter =
               rowIndex === Math.floor(size / 2) &&
               colIndex === Math.floor(size / 2);
+
             return (
               <Square
                 key={colIndex}
                 value={value}
-                isCenter={isCenter} // Define the center cell
-                isSelected={selectedCell === value} // Check if the square is selected
+                isCenter={isCenter}
+                isSelected={selectedCell === value}
+                isInWord={isInWord}
                 onSelect={handleSelect}
                 content={content[rowIndex][colIndex]}
               />
@@ -87,7 +85,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    padding: 10,
+    padding: 33,
     flex: 1,
   },
   row: {
